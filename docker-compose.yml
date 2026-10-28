@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: frizer
+      POSTGRES_PASSWORD: frizer
+      POSTGRES_DB: frizer
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata: 
