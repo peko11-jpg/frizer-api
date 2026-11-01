@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy import  select
 
 from app.database import get_db
 from app.deps import require_role
@@ -20,6 +21,8 @@ def list_services(db: Session = Depends(get_db)):
 
 @router.post("", response_model=ServiceOut, status_code=201, dependencies=[admin_only])
 def create_service(data: ServiceCreate, db: Session = Depends(get_db)):
+    if name_taken(db, data.name):
+        raise HTTPException(status.HTTP_409_CONFLICT, "Usluga sa tim imenom već postoji")     
     service = Service(**data.model_dump())
     db.add(service)
     db.commit()
@@ -32,6 +35,8 @@ def update_service(service_id: int, data: ServiceCreate, db: Session = Depends(g
     service = db.get(Service, service_id)
     if service is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Usluga ne postoji")
+    if name_taken(db, data.name, exclude_id=service_id):
+        raise HTTPException(status.HTTP_409_CONFLICT, "Usluga sa tim imenom već postoji")    
     for field, value in data.model_dump().items():
         setattr(service, field, value)
     db.commit()
@@ -46,3 +51,10 @@ def delete_service(service_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Usluga ne postoji")
     db.delete(service)
     db.commit()
+
+def name_taken(db: Session, name: str, exclude_id: int | None = None) -> bool:
+    wanted = name.strip().casefold()
+    for service in db.scalars(select(Service)):
+        if service.id != exclude_id and service.name.strip().casefold() == wanted:
+            return True
+    return False

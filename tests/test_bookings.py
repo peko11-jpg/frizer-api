@@ -5,6 +5,8 @@ from app.models import Role
 
 def future(hour, minute=0):
     day = datetime.now() + timedelta(days=7)
+    while day.weekday() == 6:  
+        day += timedelta(days=1)
     return day.replace(hour=hour, minute=minute, second=0, microsecond=0).isoformat()
 
 

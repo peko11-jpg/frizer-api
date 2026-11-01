@@ -8,6 +8,7 @@ from app.database import get_db
 from app.deps import get_current_user
 from app.models import Booking, BookingStatus, Role, Service, User
 from app.schemas import BookingCreate, BookingOut
+from app.scheduling import is_within_working_hours
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
@@ -32,6 +33,11 @@ def create_booking(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Termin mora biti u budućnosti")
 
     end_time = data.start_time + timedelta(minutes=service.duration_minutes)
+    if not is_within_working_hours(data.start_time, end_time):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "Salon ne radi u tom terminu (radno vrijeme 09:00-17:00, nedjeljom zatvoreno)",
+        )
 
     # Preklapanje: postojeći termin počinje prije nego što novi završi
     # I završava poslije nego što novi počne

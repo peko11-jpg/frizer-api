@@ -68,3 +68,6 @@ class BookingOut(BaseModel):
     start_time: datetime
     end_time: datetime
     status: BookingStatus
+
+class RoleUpdate(BaseModel):
+    role: Role
